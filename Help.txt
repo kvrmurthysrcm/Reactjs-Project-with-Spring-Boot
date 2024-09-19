@@ -10,3 +10,41 @@ git push -u origin main
 git remote add origin https://github.com/kvrmurthysrcm/Reactjs-Project-with-Spring-Boot.git
 git branch -M main
 git push -u origin main
+
+# test JWT functionality:
+# http POST :3000/token --auth KVRM:password -v
+C:\Users\Admin>http POST :3000/token --auth KVRM:password -v
+POST /token HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Authorization: Basic S1ZSTTpwYXNzd29yZA==
+Connection: keep-alive
+Content-Length: 0
+Host: localhost:3000
+User-Agent: HTTPie/3.2.3
+
+
+HTTP/1.1 401
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Connection: keep-alive
+Content-Length: 0
+Date: Wed, 11 Sep 2024 14:03:15 GMT
+Expires: 0
+Keep-Alive: timeout=60
+Pragma: no-cache
+Set-Cookie: JSESSIONID=E862FD1CF68E69ECE708E654F0EB50D4; Path=/; HttpOnly
+WWW-Authenticate: Bearer
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 0
+
+
+http GET :3000/token --auth KVRM:password -v
+
+# to implement JDBCUserManager and create users in java code for testing..
+# need to figure out how to create/register new user using custom pages..
+# https://www.youtube.com/watch?v=d7ZmZFbE_qY
+
+
+# CORS
+https://www.youtube.com/watch?v=HRwlT_etr60
