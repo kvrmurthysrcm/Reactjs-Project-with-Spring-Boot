@@ -11,6 +11,16 @@ import java.util.Date;
 @Aspect
 @Component
 public class ReactAspect {
+
+    @Before("execution(* com.reactjs.config.SecurityConfig.*(..))")
+    public void beforeAdviceForSecurityConfig(JoinPoint joinPoint){
+        System.out.println("Request to " + joinPoint.getSignature() + " started at " + new Date() );
+    }
+
+    @After("execution(* com.reactjs.config.SecurityConfig.*(..))")
+    public void aftereAdviceForSecurityConfig(JoinPoint joinPoint){
+        System.out.println("Request to " + joinPoint.getSignature() + " started at " + new Date() );
+    }
 //
 //
 //    @Before("execution(* com.dailycodebuffer.employee.dto.PageRequestDto.*(..))")

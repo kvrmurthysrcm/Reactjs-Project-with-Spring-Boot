@@ -1,12 +1,21 @@
 package com.reactjs.controller;
 
 
+import com.reactjs.dto.UserDto;
+import com.reactjs.entity.User;
 import com.reactjs.service.TokenService;
+import com.reactjs.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+
 
 @RestController
 public class AuthController {
@@ -15,15 +24,31 @@ public class AuthController {
 
     private final TokenService tokenService;
 
-    public AuthController(TokenService tokenService) {
-        this.tokenService = tokenService;
-    }
+    @Value("${restapi.host}")
+    private String restapiHost;
 
-    @PostMapping("/token")
+    @GetMapping("/token")
     public String token(Authentication authentication){
-        LOG.debug("Toekn requested for user '{}", authentication.getName() );
+        if(authentication != null){
+            LOG.debug("Token requested for user '{}", authentication.getName() );
+            System.out.println("Token requested for user '{}"+ authentication.getName() );
+        } else{
+            System.out.println("Token requested for user ...");
+        }
+
         String token = tokenService.generateToken(authentication);
         LOG.debug("Token granted '{}", token);
+        System.out.println("Token granted '{}"+ token);
         return token;
+    }
+
+    @GetMapping("/restapihost")
+    public String restapiHost(){
+        System.out.println("restapiHost: " + restapiHost );
+        return restapiHost;
+    }
+
+    public AuthController(TokenService tokenService) {
+        this.tokenService = tokenService;
     }
 }
