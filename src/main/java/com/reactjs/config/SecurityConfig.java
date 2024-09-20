@@ -6,8 +6,6 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import com.reactjs.service.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -16,19 +14,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-
 import static org.springframework.security.config.Customizer.withDefaults;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-
-
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
@@ -37,47 +33,53 @@ public class SecurityConfig {
     public final RsaKeyProperties rsaKeys;
    // private final AuthenticationLoggingFilter authenticationLoggingFilter = null;
 
-    @Autowired
-    CustomUserDetailsService customUserDetailsService;
-
-    //public SecurityConfig(RsaKeyProperties rsaKeys, AuthenticationLoggingFilter authenticationLoggingFilter) {
-    public SecurityConfig(RsaKeyProperties rsaKeys) {
+   public SecurityConfig(RsaKeyProperties rsaKeys) {
         this.rsaKeys = rsaKeys;
-       // this.authenticationLoggingFilter = authenticationLoggingFilter;
     }
 
 //    @Bean
-//    public InMemoryUserDetailsManager user(){
-//        System.out.println("Inside React APP user()@SecurityConfig:: .....................");
-//        return new InMemoryUserDetailsManager(
-//                User.withUsername("KVRM")
-//                        .password("{noop}password")
-//                        .authorities("read")
-//                        .roles("USER", "ADMIN")
-//                        .build()
-//        );
+//    public DataSourceInitializer dataSourceInitializer(DataSource dataSource) {
+//        System.out.println("dataSourceInitializer: Creating Security Users tables...");
+//        ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator();
+//        resourceDatabasePopulator.addScript(new ClassPathResource("users.ddl"));
+//        DataSourceInitializer dataSourceInitializer = new DataSourceInitializer();
+//        dataSourceInitializer.setDataSource(dataSource);
+//        dataSourceInitializer.setDatabasePopulator(resourceDatabasePopulator);
+//        return dataSourceInitializer;
 //    }
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//
-//        UserDetails user = User
-//                .withUsername("user")
-//                .password("{noop}password")
-//                .roles("USER")
-//                .build();
-//        UserDetails admin = User
-//                .withUsername("admin")
-//                .password("{noop}password")
-//                .roles("ADMIN", "USER")
-//                .build();
-//        return new InMemoryUserDetailsManager(user, admin);
-//    }
+    // Datasource is automatically created from the application.properties
+    @Bean
+    JdbcUserDetailsManager users(DataSource dataSource, PasswordEncoder encoder){
+        System.out.println("users(): Creating Security Users in db...");
+
+        System.out.println("dataSource: " + dataSource);
+
+        UserDetails user = User
+                .withUsername("KVRM")
+                .password(encoder.encode("password"))
+                .roles("USER")
+                .build();
+        UserDetails admin = User
+                .withUsername("admin")
+                .password(encoder.encode("Myadmin#123"))
+                .roles("ADMIN", "USER")
+                .build();
+        System.out.println("admin password:: " + admin.getPassword());
+
+        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
+        try {
+            jdbcUserDetailsManager.createUser(user); // this should happen only once...need to figure it out
+            jdbcUserDetailsManager.createUser(admin); // this should happen only once...need to figure it out
+        }catch(Exception e){
+            System.out.println("Exception occurred: " + e.getMessage());
+        }
+        return jdbcUserDetailsManager;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
         System.out.println("Inside React APP securityFilterChain()@SecurityConfig:: ....................." + httpSecurity.toString());
-
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 // csrf -> csrf.disable()
@@ -88,8 +90,8 @@ public class SecurityConfig {
                         .requestMatchers("/loginn").permitAll()
                         .requestMatchers("/token").permitAll()
                         //.requestMatchers("/static/*").permitAll()
-                        //.requestMatchers("/api/").authenticated()
                         .anyRequest().authenticated())
+                .logout((logout) -> logout.logoutSuccessUrl("/empui/index.html"))
                 // .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt) deprecated..
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()))
                 //.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -116,12 +118,12 @@ public class SecurityConfig {
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
+        System.out.println("passwordEncoder:....." );
         return new BCryptPasswordEncoder();
     }
 
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
-    }
-
+//    @Autowired
+//    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+//        auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
+//    }
 }

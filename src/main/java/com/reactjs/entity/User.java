@@ -14,7 +14,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data // TODO:: remove and test...
-@Table(name = "users")
+@Table(name = "userss")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
